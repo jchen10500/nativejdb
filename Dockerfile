@@ -9,7 +9,7 @@ ARG NATIVE_EXEC="apps/${CLASS_NAME}"
 ARG NATIVE_SRC="apps/${CLASS_NAME}sources"
 ARG IS_QUARKUS="false"
 ARG ASM_LINE="10"
-ARG IS_QBICC="false"
+ARG IS_QBICC="${IS_QBICC}"
 #TODO: add input args to support jarfile option for native image exec
 
 EXPOSE 8082
@@ -20,18 +20,49 @@ WORKDIR /jdwp
 COPY startProcesses.sh .
 COPY target/NativeJDB-1.0-SNAPSHOT.jar .
 
-RUN export DEBIAN_FRONTEND=noninteractive \
-&& apt-get -qqy update \
-&& apt-get -qqy install \
-  build-essential \
-  curl \
-  emacs \
-  valgrind \
-  vim \
-  libunwind-dev \
-  zlib1g-dev \
-  openjdk-17-jdk \
-  openjdk-17-jre
+#RUN if [ "$ENV" = "production" ] ; then yarn client:build:prod ; else yarn client:build ; fi
+
+RUN if [ "$IS_QBICC" = "false" ] ; \
+then  \
+      export DEBIAN_FRONTEND=noninteractive \
+        && apt-get -qqy update \
+        && apt-get -qqy install \
+        build-essential \
+        curl \
+        emacs \
+        valgrind \
+        vim \
+        libunwind-dev \
+        zlib1g-dev ; \
+else \
+    export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -qqy update \
+    && apt-get -qqy install \
+      build-essential \
+      curl \
+      emacs \
+      valgrind \
+      vim \
+      libunwind-dev \
+      zlib1g-dev \
+      openjdk-17-jdk \
+      openjdk-17-jre \
+      openjdk-17-dbg ; \
+fi
+
+#RUN export DEBIAN_FRONTEND=noninteractive \
+#&& apt-get -qqy update \
+#&& apt-get -qqy install \
+#  build-essential \
+#  curl \
+#  emacs \
+#  valgrind \
+#  vim \
+#  libunwind-dev \
+#  zlib1g-dev \
+#  openjdk-17-jdk \
+#  openjdk-17-jre \
+#  openjdk-17-dbg
 
 #Graalvm exec jar in current dir downloaded from https://github.com/graalvm/graalvm-ce-builds/releases
 # COPY graalvm ./graalvm
