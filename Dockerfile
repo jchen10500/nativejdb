@@ -9,6 +9,7 @@ ARG NATIVE_EXEC="apps/${CLASS_NAME}"
 ARG NATIVE_SRC="apps/${CLASS_NAME}sources"
 ARG IS_QUARKUS="false"
 ARG ASM_LINE="10"
+ARG IS_QBICC="false"
 #TODO: add input args to support jarfile option for native image exec
 
 EXPOSE 8082
@@ -28,13 +29,17 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   valgrind \
   vim \
   libunwind-dev \
-  zlib1g-dev
+  zlib1g-dev \
+  openjdk-17-jdk \
+  openjdk-17-jre
 
 #Graalvm exec jar in current dir downloaded from https://github.com/graalvm/graalvm-ce-builds/releases
-COPY graalvm ./graalvm
+# COPY graalvm ./graalvm
 ENV GRAALVM_HOME /jdwp/graalvm
 ENV PATH $PATH:$GRAALVM_HOME/bin
-RUN $GRAALVM_HOME/bin/gu install native-image
+ENV JAVA_HOME /usr/lib/jvm/jdk-17/
+ENV PATH=$PATH:$JAVA_HOME/bin
+# RUN $GRAALVM_HOME/bin/gu install native-image
 
 ENV ADDRESS_ARG=$ADDRESS_ARG
 ENV CLASS_NAME=$CLASS_NAME
