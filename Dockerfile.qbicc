@@ -9,7 +9,6 @@ ARG NATIVE_EXEC="apps/${CLASS_NAME}"
 ARG NATIVE_SRC="apps/${CLASS_NAME}sources"
 ARG IS_QUARKUS="false"
 ARG ASM_LINE="10"
-#TODO: add input args to support jarfile option for native image exec
 
 EXPOSE 8082
 HEALTHCHECK CMD wget -q -O /dev/null http://localhost:8080/healthy || exit 1
@@ -20,8 +19,8 @@ COPY startProcesses.sh .
 COPY target/NativeJDB-1.0-SNAPSHOT.jar .
 
 RUN export DEBIAN_FRONTEND=noninteractive \
-&& apt-get -qqy update \
-&& apt-get -qqy install \
+    && apt-get -qqy update \
+    && apt-get -qqy install \
     build-essential \
     curl \
     emacs \
@@ -30,10 +29,11 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     libunwind-dev \
     zlib1g-dev
 
-#Graalvm exec jar in current dir downloaded from https://github.com/graalvm/graalvm-ce-builds/releases
+# TODO graalvm should not be needed
 COPY graalvm ./graalvm
 ENV GRAALVM_HOME /jdwp/graalvm
 ENV PATH $PATH:$GRAALVM_HOME/bin
+ENV JAVA_HOME $GRAALVM_HOME
 RUN $GRAALVM_HOME/bin/gu install native-image
 
 ENV ADDRESS_ARG=$ADDRESS_ARG

@@ -246,7 +246,7 @@ public class JDWPThreadReference {
                     int frameId = frame.getLevel();
                     JDWP.framesById.put(frameId, frame);
 
-                    LocationImpl loc = Translator.locationLookup(frame.getFunction(), frame.getLine());
+                    LocationImpl loc = Translator.locationLookup(frame.getActualFile(), frame.getLine());
                     if (loc != null) {
                         framesLength++;
                         locations.add(loc);
@@ -288,7 +288,7 @@ public class JDWPThreadReference {
                 int framesLength = 0;
 
                 for (MIFrame frame: frames) {
-                    LocationImpl loc = Translator.locationLookup(frame.getFunction(), frame.getLine());
+                    LocationImpl loc = Translator.locationLookup(frame.getActualFile(), frame.getLine());
                     if (loc != null) {
                         framesLength++;
                     }

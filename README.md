@@ -26,7 +26,7 @@ NativeJDB uses the [JDWP protocol](https://docs.oracle.com/en/java/javase/11/doc
     - Clear Breakpoints (Delete/Disable)
     - Step Over / Step Into / Step Return
     - Stack Frames information in IDE debugger pane
-    - Primitive variables (Local + Static) values (Work-in-progress)
+    - Primitive variables (Local + Static) values
     - View of assembly code within a stack frame
     - View of variables optimized out by native-image compilation
     - Thread info

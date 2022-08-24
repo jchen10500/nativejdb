@@ -162,13 +162,13 @@ public class Translator {
 	 */
 	public static LocationImpl locationLookup(String func, int line)  {
 		// normalize GDB function name too due to inconsistency in GDB output for getting frames
-		func = normalizeMethodName(func);
+		func = normalizeMethodName(func, false);
 
 		Map<String, MethodImpl> javaMethods = MethodImpl.methods;
 		Set<String> javaMethodNames = javaMethods.keySet();
 
 		for (String javaMethodName : javaMethodNames) {
-			String gdbName = normalizeMethodName(javaMethodName);
+			String gdbName = normalizeMethodName(javaMethodName, true);
 			if (gdbName.equals(func)) {
 				MethodImpl javaMethod = javaMethods.get(javaMethodName);
 				try {
@@ -187,23 +187,45 @@ public class Translator {
 	}
 
 	/**
-	 * Translates a Java method signature into one GDB recognizes.
-	 * Namely, gets method file and method name, without parameters.
+	 * Normalizes both GDB and Java method names to contain only filename
 	 */
-	public static String normalizeMethodName(String javaMethodName) {
+	public static String normalizeMethodName(String name, boolean isJava) {
+		if (isJava) {
+			return normalizeJava(name);
+		} else {
+			return normalizeGDB(name);
+		}
+	}
 
-		String leftParen = "(";
-		String gdbStr = javaMethodName;
+	private static String normalizeGDB(String name) {
+
+		String extension = ".java";
+		String normStr = name;
 
 		// Remove everything after parenthesis
-		if (javaMethodName.contains(leftParen)) {
-			int leftParenIndex = javaMethodName.indexOf(leftParen);
-			gdbStr = gdbStr.substring(0, leftParenIndex);
+		if (name.contains(extension)) {
+			int index = name.indexOf(extension);
+			normStr = normStr.substring(0, index);
 		}
 
 		// Replaces `/` with `.`
-		gdbStr = gdbStr.replace("/", ".");
-		return gdbStr;
+		normStr = normStr.replace("/", ".");
+		return normStr;
+	}
+
+	private static String normalizeJava(String name) {
+		String colon = "::";
+		String normStr = name;
+
+		// Remove everything after colon so only filename is left
+		if (name.contains(colon)) {
+			int index = name.indexOf(colon);
+			normStr = normStr.substring(0, index);
+		}
+
+		// Replaces `/` with `.`
+		normStr = normStr.replace("/", ".");
+		return normStr;
 	}
 
 }
