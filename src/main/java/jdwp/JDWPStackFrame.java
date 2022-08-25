@@ -25,11 +25,13 @@
 
 package jdwp;
 
+import com.sun.jdi.IncompatibleThreadStateException;
 import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.*;
 import jdwp.jdi.*;
 
 import java.util.Map;
+import jdwp.jdi.*;
 
 public class JDWPStackFrame {
 
