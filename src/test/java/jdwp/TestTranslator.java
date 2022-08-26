@@ -26,11 +26,17 @@ public class TestTranslator {
     @Test
     public void testNormalizeFuncName() {
 
+        // Test class names
+        assertEquals("HelloMethod/HelloMethod", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)")[0]);
+        assertEquals(null, Translator.getClassAndFunctionName("main(java.lang.String[] *)")[0]);
+        assertEquals("HelloMethod/HelloMethod", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main")[0]);
+        assertEquals(null, Translator.getClassAndFunctionName("main")[0]);
+
         // Tests objects as parameters
-        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)"));
-        assertEquals("main", Translator.getClassAndFunctionName("main(java.lang.String[] *)"));
-        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main"));
-        assertEquals("main", Translator.getClassAndFunctionName("main"));
+        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)")[1]);
+        assertEquals("main", Translator.getClassAndFunctionName("main(java.lang.String[] *)")[1]);
+        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main")[1]);
+        assertEquals("main", Translator.getClassAndFunctionName("main")[1]);
     }
 
     private void testMethodSignature(String type, String jni) {

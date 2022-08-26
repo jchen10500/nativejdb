@@ -299,7 +299,7 @@ public class Translator {
 
 		int index = name.indexOf("::");
 		if (index != (-1)) {
-			names[0] = name.substring(0, index);
+			names[0] = name.substring(0, index).replace(".", "/");
 			name = name.substring(index + 2);
 
 		}
