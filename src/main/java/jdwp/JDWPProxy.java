@@ -103,6 +103,7 @@ public class JDWPProxy {
                 int cmd = p.cmd;
                 PacketStream packetStream = new PacketStream(gdbControl, p.id, cmdSet, cmd);
                 Command command = COMMANDS.get(cmdSet).get(cmd);
+                System.out.println(cmdSet + "." + cmd);
                 try {
                     command.reply(gdbControl, packetStream, new PacketStream(gdbControl, p));
                 } catch (VMDisconnectedException vde) {

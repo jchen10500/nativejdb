@@ -31,9 +31,11 @@ import gdb.mi.service.command.output.*;
 import jdwp.jdi.ReferenceTypeImpl;
 import jdwp.jdi.ThreadGroupReferenceImpl;
 import jdwp.jdi.ThreadReferenceImpl;
+import jdwp.model.ReferenceType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class JDWPVirtualMachine {
     static class VirtualMachine {
@@ -78,6 +80,17 @@ public class JDWPVirtualMachine {
 
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
                 String signature = command.readString();
+
+                // TODO change
+                Map<Long, ReferenceType> map = gc.getReferenceTypes();
+                for (long id : map.keySet()) {
+                    String sig = map.get(id).getSignature();
+                    if (sig.equals(signature)) {
+                        System.out.println("signature found");
+                    }
+
+                }
+
                 List<ReferenceTypeImpl> referenceTypes = gc.vm.findReferenceTypes(signature);
                 answer.writeInt(referenceTypes.size());
                 for (ReferenceTypeImpl referenceType : referenceTypes) {

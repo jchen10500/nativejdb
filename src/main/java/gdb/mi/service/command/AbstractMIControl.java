@@ -326,10 +326,15 @@ public abstract class AbstractMIControl {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(fInputStream));
 			try {
 				String line;
+				int maxLine = 10;				// prevents GDB from printing too much, particularly in -symbol-info-functions
+				int currLine = 0;
 				while ((line = reader.readLine()) != null) {
 					if (line.length() != 0) {
-						System.out.println(line);
+						if (currLine <= maxLine) {
+							System.out.println(line);
+						}
 						processMIOutput(line);
+						currLine++;
 					}
 				}
 			} catch (IOException e) {

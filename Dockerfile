@@ -16,9 +16,6 @@ HEALTHCHECK CMD wget -q -O /dev/null http://localhost:8080/healthy || exit 1
 
 WORKDIR /jdwp
 
-COPY startProcesses.sh .
-COPY target/NativeJDB-1.0-SNAPSHOT.jar .
-
 RUN export DEBIAN_FRONTEND=noninteractive \
 && apt-get -qqy update \
 && apt-get -qqy install \
@@ -42,5 +39,8 @@ ENV NATIVE_EXEC=$NATIVE_EXEC
 ENV NATIVE_SRC=$NATIVE_SRC
 ENV IS_QUARKUS=$IS_QUARKUS
 ENV ASM_LINE=$ASM_LINE
+
+COPY startProcesses.sh .
+COPY target/NativeJDB-1.0-SNAPSHOT.jar .
 
 ENTRYPOINT ./startProcesses.sh -a $ADDRESS_ARG -c $CLASS_NAME -e $NATIVE_EXEC -s $NATIVE_SRC -k $IS_QUARKUS -m $ASM_LINE

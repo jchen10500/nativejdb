@@ -195,7 +195,7 @@ public class JDWPEventRequest {
                         byte modKind = command.readByte();
                         if (modKind == 5) {
                             String regex = command.readString().replace(".", "/");
-                            System.out.println("In class prepare: " + regex);
+//                            System.out.println("In class prepare: " + regex);
                             int requestId = command.pkt.id;
                             answer.writeInt(command.pkt.id);
 
