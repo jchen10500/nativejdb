@@ -32,10 +32,13 @@ import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.MIBreakInsertInfo;
 import gdb.mi.service.command.output.MIInfo;
 import gdb.mi.service.command.output.MIResultRecord;
+import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo;
 import jdwp.jdi.LocationImpl;
 import jdwp.jdi.ReferenceTypeImpl;
+import jdwp.model.ReferenceType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -76,14 +79,21 @@ public class JDWPEventRequest {
                             byte modKind = command.readByte();
                             if (modKind == 7) {
                                 byte typeTag = command.readByte();
-                                ReferenceTypeImpl refType = command.readReferenceType();
+                                ReferenceType refType = command.readGdbReferenceType();
+//                                ReferenceTypeImpl refType = command.readReferenceType();
                                 long methodId = command.readMethodRef();
+                                Collection<Translator.MethodInfo> methods = refType.getMethods();
+                                Translator.MethodInfo method = refType.getMethod(methodId);
                                 long index = command.readLong();
-                                LocationImpl loc = new LocationImpl(refType.methodById(methodId), index);
-                                String location = refType.baseSourceName() + ":" + loc.lineNumber();
+//                                LocationImpl loc = new LocationImpl(refType.methodById(methodId), index);
+//                                String location = refType.baseSourceName() + ":" + loc.lineNumber();
 
-                                System.out.println("Queueing MI command to insert breakpoint at "+location);
-                                MICommand cmd = gc.getCommandFactory().createMIBreakInsert(false, false, "", 0, location, "0", false, false);
+                                System.out.println("Queueing MI command to insert breakpoint at " + index);
+                                MiSymbolInfoFunctionsInfo.Symbols symbol = refType.getSymbols().get(0);
+                                String fileName = symbol.getName();
+                                fileName = method.getClassName();
+                                String gdbLocation = "HelloMethod" + ":" + index;
+                                MICommand cmd = gc.getCommandFactory().createMIBreakInsert(false, false, "", 0, gdbLocation, "0", false, false);
                                 int tokenID = JDWP.getNewTokenId();
                                 gc.queueCommand(tokenID, cmd);
 
@@ -97,7 +107,7 @@ public class JDWPEventRequest {
                                     //answer.pkt.errorCode = JDWP.Error.INVALID_LOCATION;
 
                                     // remove the breakpoint in GDB
-                                    System.out.println("Queueing MI command to disable breakpoint at "+location);
+                                    System.out.println("Queueing MI command to disable breakpoint at "+ gdbLocation);
                                     cmd = gc.getCommandFactory().createMIBreakDisable(reply.getMIBreakpoint().getNumber());
                                     tokenID = JDWP.getNewTokenId();
                                     gc.queueCommand(tokenID, cmd);
@@ -119,7 +129,7 @@ public class JDWPEventRequest {
                                 Integer bkptNumber = Integer.valueOf(reply.getMIBreakpoint().getNumber());
                                 JDWP.bkptsByRequestID.put(reply.getMIInfoRequestID(), reply);
                                 JDWP.bkptsByBreakpointNumber.put(bkptNumber, reply);
-                                JDWP.bkptsLocation.put(bkptNumber, loc);
+//                                JDWP.bkptsLocation.put(bkptNumber, loc);
                                 answer.writeInt(reply.getMIInfoRequestID());
                             }
                         }

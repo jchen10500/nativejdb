@@ -81,21 +81,28 @@ public class JDWPVirtualMachine {
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
                 String signature = command.readString();
 
-                // TODO change
+                // TODO add a new method in GC control to simplify this
                 Map<Long, ReferenceType> map = gc.getReferenceTypes();
+                List<ReferenceType> refTypes = new ArrayList<>();
                 for (long id : map.keySet()) {
                     String sig = map.get(id).getSignature();
                     if (sig.equals(signature)) {
-                        System.out.println("signature found");
+                        refTypes.add(map.get(id));
                     }
-
                 }
 
-                List<ReferenceTypeImpl> referenceTypes = gc.vm.findReferenceTypes(signature);
-                answer.writeInt(referenceTypes.size());
-                for (ReferenceTypeImpl referenceType : referenceTypes) {
-                    VirtualMachine.ClassesBySignature.ClassInfo.write(referenceType, gc, answer);
+                answer.writeInt(refTypes.size());
+                for (ReferenceType refType : refTypes) {
+                    answer.writeByte(JDWP.TypeTag.CLASS);
+                    answer.writeClassRef(refType.getUniqueID());
+                    answer.writeInt(JDWP.ClassStatus.PREPARED);
                 }
+
+//                List<ReferenceTypeImpl> referenceTypes = gc.vm.findReferenceTypes(signature);
+//                answer.writeInt(referenceTypes.size());
+//                for (ReferenceTypeImpl referenceType : referenceTypes) {
+////                    VirtualMachine.ClassesBySignature.ClassInfo.write(referenceType, gc, answer);
+//                }
             }
         }
 

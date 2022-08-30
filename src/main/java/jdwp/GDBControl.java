@@ -161,4 +161,9 @@ public class GDBControl extends AbstractMIControl {
     public Map<Long, ReferenceType> getReferenceTypes() {
         return referenceTypes;
     }
+
+    public ReferenceType getReferenceType(long reTypeID) {
+        return referenceTypes.get(reTypeID);
+    }
+
 }

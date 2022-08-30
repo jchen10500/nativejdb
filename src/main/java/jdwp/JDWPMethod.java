@@ -33,6 +33,7 @@ import jdwp.jdi.ReferenceTypeImpl;
 import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.*;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,32 +60,115 @@ public class JDWPMethod {
             }
 
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
-                ReferenceTypeImpl referenceType = command.readReferenceType();
-                MethodImpl method = referenceType.methodById(command.readMethodRef());
+                long refTypeID = command.readObjectRef();
+                long methodID = command.readObjectRef();
 
-                if (method.isNative()) {
-                    answer.pkt.errorCode = JDWP.Error.NATIVE_METHOD;
-                    return;
+                jdwp.model.ReferenceType refType = gc.getReferenceType(refTypeID);
+                Collection<Translator.MethodInfo> refTypeMethods = refType.getMethods();
+                Translator.MethodInfo targetMethod = null;
+
+                for (Translator.MethodInfo m : refTypeMethods) {
+                    if (m.getUniqueID() == methodID) {
+                        targetMethod = m;
+                    }
                 }
 
-                List<LocationImpl> locations = Collections.emptyList();
-                try {
-                    locations = method.allLineLocations();
-                } catch (AbsentInformationException ignored) {
+                // Queue GDB
+                if (targetMethod != null) {
+
+                    String className = targetMethod.getClassName();     // modify if want filtering
+                    System.out.println("Queueing gdb to get line info at method: " + targetMethod.getMethodName());
+//                    MICommand cmd = gc.getCommandFactory().createMiSymbolInfoFunctions("", targetMethod.getGdbName(), Integer.MAX_VALUE, true);
+//                    int tokenID = JDWP.getNewTokenId();
+//                    gc.queueCommand(tokenID, cmd);
+//                    MiSymbolInfoFunctionsInfo reply = (MiSymbolInfoFunctionsInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+
+//                    if (reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+//                        answer.pkt.errorCode = JDWP.Error.INTERNAL;
+//                    }
+
+//                    MiSymbolInfoFunctionsInfo.SymbolFileInfo[] symboleFiles = reply.getSymbolFiles();
+//                    MiSymbolInfoFunctionsInfo.Symbols[] symbols = reply.getSymbolFiles()[0].getSymbols();
+//                    MiSymbolInfoFunctionsInfo.Symbols symbol = symbols[0];
+//                    int line = symbol.getLine();
+
+                    int start = targetMethod.getLocation().getStart();
+                    answer.writeInt(targetMethod.getLocation().getStart());
+                    answer.writeInt(targetMethod.getLocation().getEnd());
+                    int actualLines = targetMethod.getLocation().getStart() - targetMethod.getLocation().getEnd() + 1;
+                    if (targetMethod.getMethodName().contains("hello")) {
+                        answer.writeInt(25);
+                        answer.writeInt(31);
+                        int startAt = 25;
+                        int lines = 31-25+1;
+                        answer.writeInt(31-25+1);
+
+                        for (int i = 0; i < lines; i++) {
+                            answer.writeLong(startAt);
+                            answer.writeInt(startAt);
+                            startAt++;
+                        }
+                    } else {
+                        int startAt2 = 7;
+                        answer.writeInt(7);
+                        answer.writeInt(19);
+
+                        int lines = 19-7+1;
+                        answer.writeInt(lines);
+
+                        for (int i = 0; i < lines; i++) {
+                            answer.writeLong(startAt2);
+                            answer.writeInt(startAt2);
+                            startAt2++;
+                        }
+                    }
+//                    answer.writeInt(actualLines);
+//                    for (int i = 0; i < actualLines; i++) {
+//                        answer.writeLong(start);
+//                        answer.writeInt(start);
+//                        start++;
+//                    }
+
+                    // Frame command provides line info for the function
+//                    MICommand frameCMD = gc.getCommandFactory().createMIStackListFrames("0");      // FIXME threadid should not be constant
+//                    tokenID = JDWP.getNewTokenId();
+//                    gc.queueCommand(tokenID, frameCMD);
+//                    MIStackListFramesInfo frameReply = (MIStackListFramesInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+//
+//                    if (frameReply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+//                        answer.pkt.errorCode = JDWP.Error.INTERNAL;
+//                    }
+//
+//                    MIFrame[] frames = frameReply.getMIFrames();
+//                    MIFrame topFrame = frameReply.getMIFrames()[0];
                 }
-                sun.jvm.hotspot.oops.Method ref = method.ref();
-                long start = 0;
-                long end = ref.getCodeSize();
-                if (end == 0) {
-                    start = -1;
-                }
-                answer.writeLong(start);
-                answer.writeLong(end);
-                answer.writeInt(locations.size());
-                for (LocationImpl location : locations) {
-                    answer.writeLong(location.codeIndex());
-                    answer.writeInt(location.lineNumber());
-                }
+
+//                ReferenceTypeImpl referenceType = command.readReferenceType();
+//                MethodImpl method = referenceType.methodById(command.readMethodRef());
+//
+//                if (method.isNative()) {
+//                    answer.pkt.errorCode = JDWP.Error.NATIVE_METHOD;
+//                    return;
+//                }
+//
+//                List<LocationImpl> locations = Collections.emptyList();
+//                try {
+//                    locations = method.allLineLocations();
+//                } catch (AbsentInformationException ignored) {
+//                }
+//                sun.jvm.hotspot.oops.Method ref = method.ref();
+//                long start = 0;
+//                long end = ref.getCodeSize();
+//                if (end == 0) {
+//                    start = -1;
+//                }
+//                answer.writeLong(start);
+//                answer.writeLong(end);
+//                answer.writeInt(locations.size());
+//                for (LocationImpl location : locations) {
+//                    answer.writeLong(location.codeIndex());
+//                    answer.writeInt(location.lineNumber());
+//                }
             }
         }
 

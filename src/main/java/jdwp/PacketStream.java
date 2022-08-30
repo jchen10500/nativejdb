@@ -40,6 +40,7 @@ package jdwp;
 
 import jdwp.jdi.*;
 import com.sun.jdi.InternalException;
+import jdwp.model.ReferenceType;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -436,6 +437,11 @@ public class PacketStream {
 //        byte tag = readByte();
         long ref = readObjectRef();
         return gc.vm.getReferenceTypeById(ref);
+    }
+
+    ReferenceType readGdbReferenceType() {
+        long refID = readObjectRef();
+        return gc.getReferenceType(refID);
     }
 
     void writeClassLoaderReference(ClassLoaderReferenceImpl ref) {

@@ -30,7 +30,10 @@ import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.MIResultRecord;
 import gdb.mi.service.command.output.MiSymbolInfoVariablesInfo;
 import jdwp.jdi.*;
+import jdwp.model.ReferenceType;
 
+import java.lang.ref.Reference;
+import java.util.Collection;
 import java.util.List;
 
 public class JDWPReferenceType {
@@ -218,12 +221,17 @@ public class JDWPReferenceType {
             static final int COMMAND = 7;
 
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
-                ReferenceTypeImpl type = command.readReferenceType();
-                try {
-                    answer.writeString(type.baseSourceName());
-                } catch (AbsentInformationException e) {
-                    answer.pkt.errorCode = JDWP.Error.ABSENT_INFORMATION;
-                }
+                long refTypeID = command.readObjectRef();
+                jdwp.model.ReferenceType refType = gc.getReferenceType(refTypeID);
+                answer.writeString(refType.getPath() + ".java");
+
+
+//                ReferenceTypeImpl type = command.readReferenceType();
+//                try {
+//                    answer.writeString(type.baseSourceName());
+//                } catch (AbsentInformationException e) {
+//                    answer.pkt.errorCode = JDWP.Error.ABSENT_INFORMATION;
+//                }
             }
         }
 
@@ -414,12 +422,25 @@ public class JDWPReferenceType {
             }
 
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
-                ReferenceTypeImpl type = command.readReferenceType();
-                List<MethodImpl> methods = type.methods();
-                answer.writeInt(methods.size());
-                for (MethodImpl method : methods) {
-                    MethodInfo.write(method, gc, answer);
+                long refTypeID = command.readObjectRef();
+                jdwp.model.ReferenceType refType = gc.getReferenceType(refTypeID);
+                Collection<Translator.MethodInfo> refTypeMethods = refType.getMethods();
+
+                answer.writeInt(refTypeMethods.size());
+                for (Translator.MethodInfo m : refTypeMethods) {
+                    answer.writeMethodRef(m.getUniqueID());
+                    answer.writeString(m.getMethodName());
+                    answer.writeString(m.getSignature());
+                    answer.writeStringOrEmpty(null);
+                    answer.writeInt(m.getModifier());
                 }
+
+//                ReferenceTypeImpl type = command.readReferenceType();
+//                List<MethodImpl> methods = type.methods();
+//                answer.writeInt(methods.size());
+//                for (MethodImpl method : methods) {
+//                    MethodInfo.write(method, gc, answer);
+//                }
             }
         }
 

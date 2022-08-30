@@ -40,7 +40,7 @@ public class TestTranslator {
     }
 
     private void testMethodSignature(String type, String jni) {
-        Translator.MethodInfo info = new Translator.MethodInfo("", "");
+        Translator.MethodInfo info = new Translator.MethodInfo("", "", null);
         Translator.getSignature(type, "", info);
         assertEquals(jni, info.getSignature());
     }
@@ -110,14 +110,14 @@ public class TestTranslator {
 
     @Test
     public void testStaticMethod() {
-        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName");
+        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName", null);
         Translator.getSignature("boolean (void)", "classname", info);
         assertTrue((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
     }
 
     @Test
     public void testInstanceMethod() {
-        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName");
+        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName", null);
         Translator.getSignature("boolean (classname *)", "classname", info);
         assertFalse((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
     }
