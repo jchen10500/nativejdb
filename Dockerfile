@@ -16,9 +16,6 @@ HEALTHCHECK CMD wget -q -O /dev/null http://localhost:8080/healthy || exit 1
 
 WORKDIR /jdwp
 
-COPY startProcesses.sh .
-COPY target/NativeJDB-1.0-SNAPSHOT.jar .
-
 RUN export DEBIAN_FRONTEND=noninteractive \
 && apt-get -qqy update \
 && apt-get -qqy install \
@@ -35,6 +32,9 @@ COPY graalvm ./graalvm
 ENV GRAALVM_HOME /jdwp/graalvm
 ENV PATH $PATH:$GRAALVM_HOME/bin
 RUN $GRAALVM_HOME/bin/gu install native-image
+
+COPY startProcesses.sh .
+COPY target/NativeJDB-1.0-SNAPSHOT.jar .
 
 ENV ADDRESS_ARG=$ADDRESS_ARG
 ENV CLASS_NAME=$CLASS_NAME
