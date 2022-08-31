@@ -34,7 +34,6 @@ import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.*;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class JDWPMethod {
@@ -64,10 +63,10 @@ public class JDWPMethod {
                 long methodID = command.readObjectRef();
 
                 jdwp.model.ReferenceType refType = gc.getReferenceType(refTypeID);
-                Collection<Translator.MethodInfo> refTypeMethods = refType.getMethods();
-                Translator.MethodInfo targetMethod = null;
+                Collection<jdwp.model.Method.MethodInfo> refTypeMethods = refType.getMethods();
+                jdwp.model.Method.MethodInfo targetMethod = null;
 
-                for (Translator.MethodInfo m : refTypeMethods) {
+                for (jdwp.model.Method.MethodInfo m : refTypeMethods) {
                     if (m.getUniqueID() == methodID) {
                         targetMethod = m;
                     }
@@ -78,50 +77,47 @@ public class JDWPMethod {
 
                     String className = targetMethod.getClassName();     // modify if want filtering
                     System.out.println("Queueing gdb to get line info at method: " + targetMethod.getMethodName());
-//                    MICommand cmd = gc.getCommandFactory().createMiSymbolInfoFunctions("", targetMethod.getGdbName(), Integer.MAX_VALUE, true);
-//                    int tokenID = JDWP.getNewTokenId();
-//                    gc.queueCommand(tokenID, cmd);
-//                    MiSymbolInfoFunctionsInfo reply = (MiSymbolInfoFunctionsInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
 
-//                    if (reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
-//                        answer.pkt.errorCode = JDWP.Error.INTERNAL;
-//                    }
+                    int start = targetMethod.getStartLine();
+                    int end = targetMethod.getEndLine();
+                    int lineCount = end - start + 1;
 
-//                    MiSymbolInfoFunctionsInfo.SymbolFileInfo[] symboleFiles = reply.getSymbolFiles();
-//                    MiSymbolInfoFunctionsInfo.Symbols[] symbols = reply.getSymbolFiles()[0].getSymbols();
-//                    MiSymbolInfoFunctionsInfo.Symbols symbol = symbols[0];
-//                    int line = symbol.getLine();
+                    answer.writeLong((long) start);
+                    answer.writeLong((long) end);
+                    answer.writeInt(lineCount);
 
-                    int start = targetMethod.getLocation().getStart();
-                    answer.writeInt(targetMethod.getLocation().getStart());
-                    answer.writeInt(targetMethod.getLocation().getEnd());
-                    int actualLines = targetMethod.getLocation().getStart() - targetMethod.getLocation().getEnd() + 1;
-                    if (targetMethod.getMethodName().contains("hello")) {
-                        answer.writeInt(25);
-                        answer.writeInt(31);
-                        int startAt = 25;
-                        int lines = 31-25+1;
-                        answer.writeInt(31-25+1);
-
-                        for (int i = 0; i < lines; i++) {
-                            answer.writeLong(startAt);
-                            answer.writeInt(startAt);
-                            startAt++;
-                        }
-                    } else {
-                        int startAt2 = 7;
-                        answer.writeInt(7);
-                        answer.writeInt(19);
-
-                        int lines = 19-7+1;
-                        answer.writeInt(lines);
-
-                        for (int i = 0; i < lines; i++) {
-                            answer.writeLong(startAt2);
-                            answer.writeInt(startAt2);
-                            startAt2++;
-                        }
+                    for (int i = 0; i < lineCount; i++) {
+                        answer.writeLong((long) start);
+                        answer.writeInt(start);
+                        start++;
                     }
+
+//                    if (targetMethod.getMethodName().contains("hello")) {
+//                        answer.writeInt(25);
+//                        answer.writeInt(31);
+//                        int startAt = 25;
+//                        int lines = 31-25+1;
+//                        answer.writeInt(31-25+1);
+//
+//                        for (int i = 0; i < lines; i++) {
+//                            answer.writeLong(startAt);
+//                            answer.writeInt(startAt);
+//                            startAt++;
+//                        }
+//                    } else {
+//                        int startAt2 = 7;
+//                        answer.writeInt(7);
+//                        answer.writeInt(19);
+//
+//                        int lines = 19-7+1;
+//                        answer.writeInt(lines);
+//
+//                        for (int i = 0; i < lines; i++) {
+//                            answer.writeLong(startAt2);
+//                            answer.writeInt(startAt2);
+//                            startAt2++;
+//                        }
+//                    }
 //                    answer.writeInt(actualLines);
 //                    for (int i = 0; i < actualLines; i++) {
 //                        answer.writeLong(start);

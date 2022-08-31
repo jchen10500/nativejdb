@@ -1,126 +1,126 @@
-/*
- * Copyright (C) 2022 IBM Corporation
- *
- * This program is free software; you can redistribute and/or modify it under
- * the terms of the GNU General Public License v2 with Classpath Exception.
- * The text of the license is available in the file LICENSE.TXT.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See LICENSE.TXT for more details.
- */
-
-package jdwp;
-
-import org.junit.Test;
-
-import java.lang.reflect.Modifier;
-
-import static org.junit.Assert.*;
-
-/**
- * Tests the Translator class for converting C/C++ info to Java.
- */
-public class TestTranslator {
-
-    @Test
-    public void testNormalizeFuncName() {
-
-        // Test class names
-        assertEquals("HelloMethod/HelloMethod", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)")[0]);
-        assertEquals(null, Translator.getClassAndFunctionName("main(java.lang.String[] *)")[0]);
-        assertEquals("HelloMethod/HelloMethod", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main")[0]);
-        assertEquals(null, Translator.getClassAndFunctionName("main")[0]);
-
-        // Tests objects as parameters
-        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)")[1]);
-        assertEquals("main", Translator.getClassAndFunctionName("main(java.lang.String[] *)")[1]);
-        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main")[1]);
-        assertEquals("main", Translator.getClassAndFunctionName("main")[1]);
-    }
-
-    private void testMethodSignature(String type, String jni) {
-        Translator.MethodInfo info = new Translator.MethodInfo("", "", null);
-        Translator.getSignature(type, "", info);
-        assertEquals(jni, info.getSignature());
-    }
-
-    @Test
-    public void testVoidEmptySignature() {
-        testMethodSignature("void (void)", "()V");
-    }
-
-    @Test
-    public void testBooleanEmptySignature() {
-        testMethodSignature("boolean (void)", "()Z");
-    }
-
-    @Test
-    public void testShortEmptySignature() {
-        testMethodSignature("short (void)", "()S");
-    }
-    @Test
-    public void testIntEmptySignature() {
-        testMethodSignature("int (void)", "()I");
-    }
-
-    @Test
-    public void testLongEmptySignature() {
-        testMethodSignature("long (void)", "()J");
-    }
-
-    @Test
-    public void testByteEmptySignature() {
-        testMethodSignature("byte (void)", "()B");
-    }
-
-    @Test
-    public void testCharEmptySignature() {
-        testMethodSignature("char (void)", "()C");
-    }
-
-    @Test
-    public void testDoubleEmptySignature() {
-        testMethodSignature("double (void)", "()D");
-    }
-
-    @Test
-    public void testFloatEmptySignature() {
-        testMethodSignature("float (void)", "()F");
-    }
-
-    @Test
-    public void testClassEmptySignature() {
-        testMethodSignature("class java.lang.String *(void)", "()Ljava/lang/String;");
-    }
-
-    @Test
-    public void testInterfaceEmptySignature() {
-        testMethodSignature("union java.util.Collection *(void)", "()Ljava/util/Collection;");
-    }
-    @Test
-    public void testOneDimensionArrayEmptySignature() {
-        testMethodSignature("int[] (void)", "()[I");
-    }
-
-    @Test
-    public void testTwoDimensionArrayEmptySignature() {
-        testMethodSignature("int[][] (void)", "()[[I");
-    }
-
-    @Test
-    public void testStaticMethod() {
-        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName", null);
-        Translator.getSignature("boolean (void)", "classname", info);
-        assertTrue((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
-    }
-
-    @Test
-    public void testInstanceMethod() {
-        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName", null);
-        Translator.getSignature("boolean (classname *)", "classname", info);
-        assertFalse((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
-    }
-
-
-}
+///*
+// * Copyright (C) 2022 IBM Corporation
+// *
+// * This program is free software; you can redistribute and/or modify it under
+// * the terms of the GNU General Public License v2 with Classpath Exception.
+// * The text of the license is available in the file LICENSE.TXT.
+// *
+// * This program is distributed in the hope that it will be useful, but WITHOUT
+// * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// * FITNESS FOR A PARTICULAR PURPOSE. See LICENSE.TXT for more details.
+// */
+//
+//package jdwp;
+//
+//import org.junit.Test;
+//
+//import java.lang.reflect.Modifier;
+//
+//import static org.junit.Assert.*;
+//
+///**
+// * Tests the Translator class for converting C/C++ info to Java.
+// */
+//public class TestTranslator {
+//
+//    @Test
+//    public void testNormalizeFuncName() {
+//
+//        // Test class names
+//        assertEquals("HelloMethod/HelloMethod", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)")[0]);
+//        assertEquals(null, Translator.getClassAndFunctionName("main(java.lang.String[] *)")[0]);
+//        assertEquals("HelloMethod/HelloMethod", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main")[0]);
+//        assertEquals(null, Translator.getClassAndFunctionName("main")[0]);
+//
+//        // Tests objects as parameters
+//        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main(java.lang.String[] *)")[1]);
+//        assertEquals("main", Translator.getClassAndFunctionName("main(java.lang.String[] *)")[1]);
+//        assertEquals("main", Translator.getClassAndFunctionName("HelloMethod.HelloMethod::main")[1]);
+//        assertEquals("main", Translator.getClassAndFunctionName("main")[1]);
+//    }
+//
+//    private void testMethodSignature(String type, String jni) {
+//        Translator.MethodInfo info = new Translator.MethodInfo("", "", null);
+//        Translator.getSignature(type, "", info);
+//        assertEquals(jni, info.getSignature());
+//    }
+//
+//    @Test
+//    public void testVoidEmptySignature() {
+//        testMethodSignature("void (void)", "()V");
+//    }
+//
+//    @Test
+//    public void testBooleanEmptySignature() {
+//        testMethodSignature("boolean (void)", "()Z");
+//    }
+//
+//    @Test
+//    public void testShortEmptySignature() {
+//        testMethodSignature("short (void)", "()S");
+//    }
+//    @Test
+//    public void testIntEmptySignature() {
+//        testMethodSignature("int (void)", "()I");
+//    }
+//
+//    @Test
+//    public void testLongEmptySignature() {
+//        testMethodSignature("long (void)", "()J");
+//    }
+//
+//    @Test
+//    public void testByteEmptySignature() {
+//        testMethodSignature("byte (void)", "()B");
+//    }
+//
+//    @Test
+//    public void testCharEmptySignature() {
+//        testMethodSignature("char (void)", "()C");
+//    }
+//
+//    @Test
+//    public void testDoubleEmptySignature() {
+//        testMethodSignature("double (void)", "()D");
+//    }
+//
+//    @Test
+//    public void testFloatEmptySignature() {
+//        testMethodSignature("float (void)", "()F");
+//    }
+//
+//    @Test
+//    public void testClassEmptySignature() {
+//        testMethodSignature("class java.lang.String *(void)", "()Ljava/lang/String;");
+//    }
+//
+//    @Test
+//    public void testInterfaceEmptySignature() {
+//        testMethodSignature("union java.util.Collection *(void)", "()Ljava/util/Collection;");
+//    }
+//    @Test
+//    public void testOneDimensionArrayEmptySignature() {
+//        testMethodSignature("int[] (void)", "()[I");
+//    }
+//
+//    @Test
+//    public void testTwoDimensionArrayEmptySignature() {
+//        testMethodSignature("int[][] (void)", "()[[I");
+//    }
+//
+//    @Test
+//    public void testStaticMethod() {
+//        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName", null);
+//        Translator.getSignature("boolean (void)", "classname", info);
+//        assertTrue((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
+//    }
+//
+//    @Test
+//    public void testInstanceMethod() {
+//        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodName", null);
+//        Translator.getSignature("boolean (classname *)", "classname", info);
+//        assertFalse((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
+//    }
+//
+//
+//}

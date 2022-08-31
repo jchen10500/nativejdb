@@ -1,15 +1,33 @@
 package jdwp.model;
 
-import jdwp.Translator;
-
 public class Location {
 
+    private ReferenceType refType;
+    private Method.MethodInfo method;
     private int start, end, srcLine;
 
-    public Location(int start, int end, int srcLine) {
+    public Location(ReferenceType refType, Method.MethodInfo method, int start, int end, int srcLine) {
+        this.refType = refType;
+        this.method = method;
         this.start = start;
         this.end = end;
         this.srcLine = srcLine;
+    }
+
+    public ReferenceType getRefType() {
+        return refType;
+    }
+
+    public void setRefType(ReferenceType refType) {
+        this.refType = refType;
+    }
+
+    public Method.MethodInfo getMethod() {
+        return method;
+    }
+
+    public void setMethod(Method.MethodInfo method) {
+        this.method = method;
     }
 
     public int getStart() {

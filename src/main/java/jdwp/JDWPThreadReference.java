@@ -29,17 +29,54 @@ import com.sun.jdi.IncompatibleThreadStateException;
 import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.*;
 import jdwp.jdi.*;
+import jdwp.model.Location;
+import jdwp.model.Method;
+import jdwp.model.ReferenceType;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
 public class JDWPThreadReference {
 
+    private static Location getLocationOfFrame(MIFrame targetFrame) {
+        Location targetLocation = null;
+        for (Location loc : JDWP.bkptLocation.values()) {
+            // Verify file/function names are the same
+            if (loc.getMethod().getGdbName().equals(targetFrame.getFunction())) {
+                // Verify line numbers are the same
+                if (loc.getSrcLine() == targetFrame.getLine()) {
+                    targetLocation = loc;
+                }
+            }
+        }
+        return targetLocation;
+    }
 
+    private static MIFrame[] getFramesUntil(MIFrame[] frames) {
+        int indexToCutOff = 0;
+        boolean stop = false;
+        MIFrame currFrame;
+        MIFrame startFrame = frames[0];
+
+        while (!stop && indexToCutOff < frames.length) {
+            currFrame = frames[indexToCutOff];
+
+            // FIXME: what is a good condition to cut off frame?
+            if (!currFrame.getFile().equals(startFrame.getFile())) {
+                stop = true;
+            }
+
+            indexToCutOff++;
+        }
+        return Arrays.copyOfRange(frames, 0, indexToCutOff - 1);
+    }
 
     static class ThreadReference {
         static final int COMMAND_SET = 11;
         private ThreadReference() {}  // hide constructor
+
+
 
         /**
          * Returns the thread name.
@@ -225,44 +262,58 @@ public class JDWPThreadReference {
                 }
             }
 
-
-
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
-                String threadId = command.readObjectRef() + "";
+                long threadId = command.readObjectRef();
 
-                System.out.println("Queueing MI command to get frames");
-                //MICommand cmd = gc.getCommandFactory().createMIStackListFrames(String.valueOf(threadId));
-                MICommand cmd = gc.getCommandFactory().createMIStackListFrames(threadId);
-                int tokenID = JDWP.getNewTokenId();
-                gc.queueCommand(tokenID, cmd);
+//                System.out.println("Queueing MI command to get frames at ID = " + threadId);
 
-                MIStackListFramesInfo reply = (MIStackListFramesInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
-                if (reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
-                    answer.pkt.errorCode = JDWP.Error.INTERNAL;
-                }
-
-                MIFrame[] frames = reply.getMIFrames();
-                int framesLength = 0;
-                List<Integer> frameIds = new ArrayList<>();
-                List<LocationImpl> locations = new ArrayList<>();
-
-
-                for (MIFrame frame: frames) {
-                    int frameId = frame.getLevel();
-                    JDWP.framesById.put(frameId, frame);
-
-                    LocationImpl loc = Translator.locationLookup(frame.getFunction(), frame.getLine());
-                    if (loc != null) {
-                        framesLength++;
-                        locations.add(loc);
-                        frameIds.add(frameId);
+                MIFrame[] frames = JDWP.framesByThreadId.get(threadId);
+                answer.writeInt(frames.length);
+                for (MIFrame frame : frames) {
+                    answer.writeFrameRef(frame.getLevel());
+                    ReferenceType refType = gc.getReferenceTypeFromMethodName(frame.getFunction());
+                    Method.MethodInfo method = refType.getMethod(frame.getFunction());
+                    if (method != null) {
+                        Location newLoc = new Location(refType, method, frame.getLine(), frame.getLine() + 1, frame.getLine());
+                        answer.writeLocation2(newLoc);
                     }
+
+                    // Byte tag, long RefTypeID, long MethodID, long index
                 }
-                answer.writeInt(framesLength);
-                for (int i = 0; i < framesLength; i++) {
-                    answer.writeFrameRef(frameIds.get(i));
-                    answer.writeLocation(locations.get(i));
-                }
+
+
+                //MICommand cmd = gc.getCommandFactory().createMIStackListFrames(String.valueOf(threadId));
+//                MICommand cmd = gc.getCommandFactory().createMIStackListFrames(threadId);
+//                int tokenID = JDWP.getNewTokenId();
+//                gc.queueCommand(tokenID, cmd);
+//
+//                MIStackListFramesInfo reply = (MIStackListFramesInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+//                if (reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+//                    answer.pkt.errorCode = JDWP.Error.INTERNAL;
+//                }
+//
+//                MIFrame[] frames = reply.getMIFrames();
+//                int framesLength = 0;
+//                List<Integer> frameIds = new ArrayList<>();
+//                List<LocationImpl> locations = new ArrayList<>();
+
+
+//                for (MIFrame frame: frames) {
+//                    int frameId = frame.getLevel();
+//                    JDWP.framesById.put(frameId, frame);
+//
+//                    LocationImpl loc = Translator.locationLookup(frame.getFunction(), frame.getLine());
+//                    if (loc != null) {
+//                        framesLength++;
+//                        locations.add(loc);
+//                        frameIds.add(frameId);
+//                    }
+//                }
+//                answer.writeInt(framesLength);
+//                for (int i = 0; i < framesLength; i++) {
+//                    answer.writeFrameRef(frameIds.get(i));
+//                    answer.writeLocation(locations.get(i));
+//                }
             }
         }
 
@@ -276,11 +327,11 @@ public class JDWPThreadReference {
             static final int COMMAND = 7;
 
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
-                String threadId = command.readObjectRef() + "";
+                long threadId = command.readObjectRef();
 
                 System.out.println("Queueing MI command to get frames");
                 //MICommand cmd = gc.getCommandFactory().createMIStackListFrames(String.valueOf(threadId));
-                MICommand cmd = gc.getCommandFactory().createMIStackListFrames(threadId);
+                MICommand cmd = gc.getCommandFactory().createMIStackListFrames(String.valueOf(threadId));
                 int tokenID = JDWP.getNewTokenId();
                 gc.queueCommand(tokenID, cmd);
 
@@ -290,15 +341,17 @@ public class JDWPThreadReference {
                 }
 
                 MIFrame[] frames = reply.getMIFrames();
-                int framesLength = 0;
+//                int framesLength = 0;
 
-                for (MIFrame frame: frames) {
-                    LocationImpl loc = Translator.locationLookup(frame.getFunction(), frame.getLine());
-                    if (loc != null) {
-                        framesLength++;
-                    }
-                }
-                answer.writeInt(framesLength);
+//                for (MIFrame frame: frames) {
+//                    LocationImpl loc = Translator.locationLookup(frame.getFunction(), frame.getLine());
+//                    if (loc != null) {
+//                        framesLength++;
+//                    }
+//                }
+                MIFrame[] truncatedFrame = getFramesUntil(frames);
+                JDWP.framesByThreadId.put(threadId, truncatedFrame);
+                answer.writeInt(truncatedFrame.length);
             }
         }
 

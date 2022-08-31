@@ -30,9 +30,8 @@ import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.MIResultRecord;
 import gdb.mi.service.command.output.MiSymbolInfoVariablesInfo;
 import jdwp.jdi.*;
-import jdwp.model.ReferenceType;
+import jdwp.model.Method;
 
-import java.lang.ref.Reference;
 import java.util.Collection;
 import java.util.List;
 
@@ -424,10 +423,10 @@ public class JDWPReferenceType {
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
                 long refTypeID = command.readObjectRef();
                 jdwp.model.ReferenceType refType = gc.getReferenceType(refTypeID);
-                Collection<Translator.MethodInfo> refTypeMethods = refType.getMethods();
+                Collection<Method.MethodInfo> refTypeMethods = refType.getMethods();
 
                 answer.writeInt(refTypeMethods.size());
-                for (Translator.MethodInfo m : refTypeMethods) {
+                for (Method.MethodInfo m : refTypeMethods) {
                     answer.writeMethodRef(m.getUniqueID());
                     answer.writeString(m.getMethodName());
                     answer.writeString(m.getSignature());

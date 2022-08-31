@@ -32,8 +32,10 @@ import gdb.mi.service.command.commands.MISymbolInfoFunctions;
 import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo;
 import jdwp.jdi.VirtualMachineImpl;
 import jdwp.model.ReferenceType;
+import jdwp.model.Method.MethodInfo;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -110,11 +112,11 @@ public class GDBControl extends AbstractMIControl {
     }
 
     private void loadSymbols() {
-        MICommand<MiSymbolInfoFunctionsInfo> cmd = getCommandFactory().createMiSymbolInfoFunctions();
+        MICommand<MiSymbolInfoFunctionsInfo> cmd = getCommandFactory().createMiSymbolInfoFunctions("", "::", 0, false);
         int token = JDWP.getNewTokenId();
         queueCommand(token, cmd);
         MiSymbolInfoFunctionsInfo response = (MiSymbolInfoFunctionsInfo) getResponse(token, JDWP.DEF_REQUEST_TIMEOUT);
-        Translator.translateReferenceTypes(referenceTypes, response);
+        Translator.translateReferenceTypes(referenceTypes, response, this);
 
     }
 
@@ -164,6 +166,19 @@ public class GDBControl extends AbstractMIControl {
 
     public ReferenceType getReferenceType(long reTypeID) {
         return referenceTypes.get(reTypeID);
+    }
+
+    public ReferenceType getReferenceTypeFromMethodName(String methodName) {
+        long refTypeID = 0;
+
+        while (refTypeID < referenceTypes.size()) {
+            ReferenceType refType = referenceTypes.get(refTypeID);
+            if (refType.containsMethod(methodName)) {
+                return refType;
+            }
+            refTypeID++;
+        }
+        return null;
     }
 
 }

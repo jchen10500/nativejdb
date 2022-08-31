@@ -11,6 +11,7 @@
 
 package jdwp;
 
+import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.events.*;
 import gdb.mi.service.command.output.*;
 import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo.SymbolFileInfo;
@@ -19,6 +20,7 @@ import jdwp.jdi.LocationImpl;
 import jdwp.jdi.MethodImpl;
 import jdwp.jdi.ConcreteMethodImpl;
 import jdwp.model.Location;
+import jdwp.model.Method;
 import jdwp.model.ReferenceType;
 
 import javax.lang.model.SourceVersion;
@@ -121,7 +123,7 @@ public class Translator {
 		byte suspendPolicy = info.getMIInfoSuspendPolicy();
 		int requestId = info.getMIInfoRequestID();
 		byte eventKind = info.getMIInfoEventKind();
-//		LocationImpl loc = JDWP.bkptsLocation.get(eventNumber);
+		Location loc = JDWP.bkptLocation.get(eventNumber);
 		long threadID = getThreadId(event);
 		System.out.println("THREAD ID FOR HIT: "+ threadID);
 		//long threadID = getMainThreadId(gc);
@@ -131,7 +133,7 @@ public class Translator {
 		packetStream.writeByte(eventKind);
 		packetStream.writeInt(requestId);
 		packetStream.writeObjectRef(threadID);
-//		packetStream.writeLocation(loc);
+		packetStream.writeLocation2(loc);		// FIXME
 		return packetStream;
 	}
 
@@ -187,84 +189,9 @@ public class Translator {
 		return typeSignature.containsKey(type);
 	}
 
-	public static class MethodInfo {
-		private String className;
-		private String methodName;
-
-		private String gdbName;
-		private String returnType;
-		private List<String> argumentTypes = new ArrayList<>();
-
-		private int modifier = Modifier.STATIC | Modifier.PUBLIC;
-		private final Long uniqueID;
-
-		private Location location;
-		private static Long counter = 0L;
-
-		public MethodInfo(String className, String methodName, Location location) {
-			this.className = className;
-			this.methodName = methodName;
-			this.location = location;
-			this.uniqueID = counter++;
-		}
-
-		public String getMethodName() {
-			return methodName;
-		}
-
-		public String getClassName() {
-			return className;
-		}
-		public String getGdbName() {
-			return gdbName;
-		}
-
-		public void setReturnType(String returnType) {
-			this.returnType = returnType;
-		}
-
-		public void addArgumentType(String paramType) {
-			argumentTypes.add(paramType);
-		}
-
-		public String getSignature() {
-			StringBuilder builder = new StringBuilder("(");
-			for(String argType : argumentTypes) {
-				builder.append(gdb2JNIType(argType));
-			}
-			builder.append(')');
-			builder.append(gdb2JNIType(returnType));
-			return builder.toString();
-		}
-
-		public void addModifier(int modifier) {
-			this.modifier |= modifier;
-		}
-
-		public void removeModifier(int modifier) {
-			this.modifier &= ~modifier;
-		}
-
-		public int getModifier() {
-			return modifier;
-		}
-
-		public Long getUniqueID() {
-			return uniqueID;
-		}
-
-		public void setGDBName(String name) {
-			this.gdbName = name;
-		}
-
-		public Location getLocation() {
-			return location;
-		}
-	}
-
-	public static MethodInfo gdbSymbolToMethodInfo(String name, String type, Location location) {
+	public static Method.MethodInfo gdbSymbolToMethodInfo(String name, String type) {
 		String[] functionNames = getClassAndFunctionName(name);
-		MethodInfo info = new MethodInfo(functionNames[0], functionNames[1], location);
+		Method.MethodInfo info = new Method.MethodInfo(functionNames[0], functionNames[1]);
 		info.setGDBName(name);
 		getSignature(type, functionNames[0], info);
 		return info;
@@ -291,7 +218,7 @@ public class Translator {
 	 * @param type the type information from GDB
 	 * @return the JNI signature
 	 */
-	public static void getSignature(String type, String className, MethodInfo info) {
+	public static void getSignature(String type, String className, Method.MethodInfo info) {
 		int index = type.indexOf('(');
 		if (index == (-1)) {
 			info.setReturnType(normalizeType(type));
@@ -388,7 +315,7 @@ public class Translator {
 	}
 
 
-	public static void translateReferenceTypes(Map<Long, ReferenceType> referenceTypes, MiSymbolInfoFunctionsInfo response) {
+	public static void translateReferenceTypes(Map<Long, ReferenceType> referenceTypes, MiSymbolInfoFunctionsInfo response, GDBControl gc) {
 		Map<String, ReferenceType> types = new HashMap<>();
 		for(SymbolFileInfo symbolFile : response.getSymbolFiles()) {
 			for(Symbols symbol : symbolFile.getSymbols()) {
@@ -396,8 +323,11 @@ public class Translator {
 				if (index != (-1)) {
 					var className = symbol.getName().substring(0, index);
 					if (isJavaClassName(className)) {
-						Location location = new Location(0, 10, symbol.getLine());
-						var methodInfo = gdbSymbolToMethodInfo(symbol.getName(), symbol.getType(), location);
+						var methodInfo = gdbSymbolToMethodInfo(symbol.getName(), symbol.getType());
+
+						if (methodInfo.getGdbName().contains("HelloMethod")) {				// FIXME
+							setStartEndLine(methodInfo, gc);
+						}
 
 						var refType = types.computeIfAbsent(className, key -> {
 							var type = new ReferenceType(className);
@@ -406,6 +336,7 @@ public class Translator {
 						});
 						refType.addMethod(methodInfo);
 						refType.addSymbol(symbol);
+						Location location = new Location(refType, methodInfo, 0, 10, symbol.getLine());
 					}
 				}
 			}
@@ -420,6 +351,84 @@ public class Translator {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Determine the source lines of this method by continuously queueing -break-insert
+	 * until the function name returned is no longer the function name of this method.
+	 */
+	private static void setStartEndLine(Method.MethodInfo method, GDBControl gc) {
+
+		ArrayList<String> bkptNumbers = new ArrayList<>();
+
+		String gdbLocation = method.getGdbName();
+		int start = 0;
+		int end = 0;
+		int currLine = start;
+		boolean stop = false;
+
+		// 1. Get first line of the method
+		MICommand cmd = gc.getCommandFactory().createMIBreakInsert(false, false, "", 0, gdbLocation, "0", false, false);
+		int tokenID = JDWP.getNewTokenId();
+		gc.queueCommand(tokenID, cmd);
+
+		MIBreakInsertInfo reply = (MIBreakInsertInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+		if (!reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+			start = reply.getMIBreakpoint().getLine();
+			currLine = start;
+			bkptNumbers.add(reply.getMIBreakpoint().getNumber());
+		}
+
+		// 2. Continuously set breakpoints until method name changes
+		while (!stop) {
+			currLine++;
+			gdbLocation = method.getGDBLocationName() + ":" + currLine;
+			cmd = gc.getCommandFactory().createMIBreakInsert(false, false, "", 0, gdbLocation, "0", false, false);
+
+			tokenID = JDWP.getNewTokenId();
+			gc.queueCommand(tokenID, cmd);
+
+			reply = (MIBreakInsertInfo) gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+			if (!reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+				if (method.getGdbName().equals(reply.getMIBreakpoint().getFunction())) {
+					end = currLine;
+				}
+				bkptNumbers.add(reply.getMIBreakpoint().getNumber());
+			} else {
+				stop = true;
+			}
+		}
+
+//		System.out.println("method " + method.getMethodName() + "lines = " + start + " - " + end);
+
+		// 3. Clear all breakpoints
+		String[] bkptArray = new String[bkptNumbers.size()];
+		for (int i = 0; i < bkptNumbers.size(); i++) {
+			bkptArray[i] = bkptNumbers.get(i);
+		}
+
+		cmd = gc.getCommandFactory().createMIBreakDelete(bkptArray);
+		tokenID = JDWP.getNewTokenId();
+		gc.queueCommand(tokenID, cmd);
+
+		MIInfo bkptClearReply = gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+		if (bkptClearReply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+			System.out.println("Something went wrong with clearing all bkpts");
+		}
+
+		// (To delete) list bkpts
+		cmd = gc.getCommandFactory().createMIBreakList();
+		tokenID = JDWP.getNewTokenId();
+		gc.queueCommand(tokenID, cmd);
+
+		MIInfo breakList = gc.getResponse(tokenID, JDWP.DEF_REQUEST_TIMEOUT);
+		if (breakList.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
+			System.out.println("Something went wrong with listing all bkpts");
+		}
+
+		// 4. Set start and ending line in method
+		method.setStartLine(start);			// should it be start - 1 to include function declaration?
+		method.setEndLine(end);
 	}
 }
 

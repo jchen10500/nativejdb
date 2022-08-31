@@ -26,15 +26,14 @@
 package jdwp;
 
 import gdb.mi.service.command.events.MIEvent;
-import gdb.mi.service.command.Listener;
-import gdb.mi.service.command.MIRunControlEventProcessor;
 import gdb.mi.service.command.commands.MICommand;
 import gdb.mi.service.command.output.MIBreakInsertInfo;
 import gdb.mi.service.command.output.MIInfo;
 import gdb.mi.service.command.output.MIResultRecord;
 import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo;
-import jdwp.jdi.LocationImpl;
 import jdwp.jdi.ReferenceTypeImpl;
+import jdwp.model.Location;
+import jdwp.model.Method;
 import jdwp.model.ReferenceType;
 
 import java.util.ArrayList;
@@ -82,8 +81,8 @@ public class JDWPEventRequest {
                                 ReferenceType refType = command.readGdbReferenceType();
 //                                ReferenceTypeImpl refType = command.readReferenceType();
                                 long methodId = command.readMethodRef();
-                                Collection<Translator.MethodInfo> methods = refType.getMethods();
-                                Translator.MethodInfo method = refType.getMethod(methodId);
+                                Collection<Method.MethodInfo> methods = refType.getMethods();
+                                Method.MethodInfo method = refType.getMethod(methodId);
                                 long index = command.readLong();
 //                                LocationImpl loc = new LocationImpl(refType.methodById(methodId), index);
 //                                String location = refType.baseSourceName() + ":" + loc.lineNumber();
@@ -91,8 +90,8 @@ public class JDWPEventRequest {
                                 System.out.println("Queueing MI command to insert breakpoint at " + index);
                                 MiSymbolInfoFunctionsInfo.Symbols symbol = refType.getSymbols().get(0);
                                 String fileName = symbol.getName();
-                                fileName = method.getClassName();
-                                String gdbLocation = "HelloMethod" + ":" + index;
+                                fileName = method.getClassName() + ".java";
+                                String gdbLocation = fileName + ":" + index;
                                 MICommand cmd = gc.getCommandFactory().createMIBreakInsert(false, false, "", 0, gdbLocation, "0", false, false);
                                 int tokenID = JDWP.getNewTokenId();
                                 gc.queueCommand(tokenID, cmd);
@@ -102,6 +101,10 @@ public class JDWPEventRequest {
                                     answer.pkt.errorCode = JDWP.Error.INTERNAL;
                                     return;
                                 }
+
+                                int miLine = reply.getMIBreakpoint().getLine();
+
+                                Location location = new Location(refType, method, miLine, miLine + 1, miLine);
 
                                 if (differentBreakLine(reply)) { // This is an invalid location in the source to set a breakpoint
                                     //answer.pkt.errorCode = JDWP.Error.INVALID_LOCATION;
@@ -129,7 +132,7 @@ public class JDWPEventRequest {
                                 Integer bkptNumber = Integer.valueOf(reply.getMIBreakpoint().getNumber());
                                 JDWP.bkptsByRequestID.put(reply.getMIInfoRequestID(), reply);
                                 JDWP.bkptsByBreakpointNumber.put(bkptNumber, reply);
-//                                JDWP.bkptsLocation.put(bkptNumber, loc);
+                                JDWP.bkptLocation.put(bkptNumber, location);
                                 answer.writeInt(reply.getMIInfoRequestID());
                             }
                         }

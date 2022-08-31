@@ -27,6 +27,7 @@ package jdwp;
 
 import gdb.mi.service.command.output.*;
 import jdwp.jdi.*;
+import jdwp.model.Location;
 
 import java.util.*;
 
@@ -45,11 +46,13 @@ public class JDWP {
      */
     static Map<Integer, MIBreakInsertInfo> bkptsByBreakpointNumber = new HashMap<>(); //for async events processing
     static Map<Integer, LocationImpl> bkptsLocation = new HashMap<>(); //for async events processing
+    static Map<Integer, Location> bkptLocation = new HashMap<>(); //for async events processing
     static Map<Integer, MIBreakInsertInfo> bkptsByRequestID = new HashMap<>(); //for sync event requests
 
     static Map<Long, MIInfo> stepByThreadID = new HashMap<>(); //for async events processing
 
     static Map<Integer, MIFrame> framesById = new HashMap<>();
+    static Map<Long, MIFrame[]> framesByThreadId = new HashMap<>();
 
     static Map<Integer, LocalVariableImpl> localsByID = new HashMap<>();
 

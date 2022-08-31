@@ -12,7 +12,7 @@ public class ReferenceType {
     private ArrayList<MiSymbolInfoFunctionsInfo.Symbols> symbols;
     private final String className;
 
-    private final Map<Long, Translator.MethodInfo> methods = new HashMap<>();
+    private final Map<Long, Method.MethodInfo> methods = new HashMap<>();
 
     private final Long uniqueID;
 
@@ -28,11 +28,11 @@ public class ReferenceType {
         return className;
     }
 
-    public void addMethod(Translator.MethodInfo methodInfo) {
+    public void addMethod(Method.MethodInfo methodInfo) {
         methods.put(methodInfo.getUniqueID(), methodInfo);
     }
 
-    public Collection<Translator.MethodInfo> getMethods() {
+    public Collection<Method.MethodInfo> getMethods() {
         return methods.values();
     }
 
@@ -59,8 +59,20 @@ public class ReferenceType {
         return className;   // FIXME
     }
 
-    public Translator.MethodInfo getMethod(long methodRef) {
+    public Method.MethodInfo getMethod(long methodRef) {
         return methods.get(methodRef);
+    }
+    public Method.MethodInfo getMethod(String methodName){
+        for (Method.MethodInfo m : getMethods()) {
+            if (m.getGdbName().equals(methodName)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+    public boolean containsMethod(String methodName) {
+        return getMethod(methodName) != null;
     }
 
     public void addSymbol(MiSymbolInfoFunctionsInfo.Symbols symbol) {

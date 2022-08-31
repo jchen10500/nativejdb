@@ -40,6 +40,7 @@ package jdwp;
 
 import jdwp.jdi.*;
 import com.sun.jdi.InternalException;
+import jdwp.model.Location;
 import jdwp.model.ReferenceType;
 
 import java.io.ByteArrayOutputStream;
@@ -212,6 +213,14 @@ public class PacketStream {
         writeClassRef(refType.uniqueID());
         writeMethodRef(location.methodRef());
         writeLong(location.codeIndexInt());
+    }
+
+    void writeLocation2(Location location) {
+        ReferenceType refType = location.getRefType();
+        writeByte(JDWP.TypeTag.CLASS)   ;    // FIXME
+        writeClassRef(refType.getUniqueID());
+        writeMethodRef(location.getMethod().getUniqueID());
+        writeLong(location.getSrcLine());
     }
     //
     void writeValue(ValueImpl val) {
