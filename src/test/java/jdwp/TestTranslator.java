@@ -116,5 +116,41 @@ public class TestTranslator {
         assertFalse((info.getModifier() & Modifier.STATIC) == Modifier.STATIC);
     }
 
+    @Test
+    public void testObjectMethod() {
+        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodname");
+        Translator.getSignature("java.lang.Object *(java.lang.Object *, java.lang.Object *)", "classname", info); ;
+        assertEquals(info.getSignature(), "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    }
+
+    // arrays in C are of type pointers, so their type will be with *.
+    // Problem with distinguishing array types from objects
+    @Test
+    public void testMultipleParamsMethod() {
+        Translator.MethodInfo info = new Translator.MethodInfo("classname", "methodname");
+        Translator.getSignature("long (int, java.lang.String *)", "classname", info); ;
+        assertEquals(info.getSignature(), "(ILjava/lang/String;)J");
+    }
+
+    @Test
+    public void testGetQbiccFilenames() {
+        String input = "_JHelloNested_HelloNested_main__3Ljava_lang_String_2_V";
+        String output = "HelloNested/HelloNested.java";
+        assertEquals(output, Translator.getQbiccFilename(input));
+    }
+
+    @Test
+    public void testGetQbiccFilenamesWithObjects() {
+        String input = "_JHelloNested_HelloNested_00024Greeter_greeter__3Ljava_lang_String_2_LHelloNested_HelloNested_00024Greeter_2";
+        String output = "HelloNested/HelloNested.java";
+        assertEquals(output, Translator.getQbiccFilename(input));
+    }
+
+    @Test
+    public void testGetQbiccFilenamesWithJavaClasses() {
+        String input = "_Jjava_util_Map_entry__Ljava_lang_Object_2Ljava_lang_Object_2_Ljava_util_Map_00024Entry_2";
+        String output = "java/util/Map.java";
+        assertEquals(output, Translator.getQbiccFilename(input));
+    }
 
 }
