@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class JDWP {
 
-    public static MiSymbolInfoFunctionsInfo.Symbols symbol = null;
+    public static MISymbolInfoFunctionsInfo.Symbols symbol = null;
 
     /**
      * The default JDI request timeout when no preference is set.

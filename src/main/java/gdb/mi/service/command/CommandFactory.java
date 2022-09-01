@@ -235,11 +235,11 @@ public class CommandFactory {
 
 	public MICommand<MIInfo> createMIPrint(String expression) { return new MIPrint(expression); }
 
-	public MICommand<MiSymbolInfoFunctionsInfo> createMiSymbolInfoFunctions() {
+	public MICommand<MISymbolInfoFunctionsInfo> createMiSymbolInfoFunctions() {
 		return new MISymbolInfoFunctions();
 	}
 
-	public MICommand<MiSymbolInfoFunctionsInfo> createMiSymbolInfoFunctions(String typeRegExp, String nameRegExp, int maxResults, boolean includeNonDebug) {
+	public MICommand<MISymbolInfoFunctionsInfo> createMiSymbolInfoFunctions(String typeRegExp, String nameRegExp, int maxResults, boolean includeNonDebug) {
 		return new MISymbolInfoFunctions(typeRegExp, nameRegExp, maxResults, includeNonDebug);
 	}
 

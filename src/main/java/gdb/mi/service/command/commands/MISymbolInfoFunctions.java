@@ -14,7 +14,7 @@
 package gdb.mi.service.command.commands;
 
 import gdb.mi.service.command.output.MIOutput;
-import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo;
+import gdb.mi.service.command.output.MISymbolInfoFunctionsInfo;
 
 import java.util.ArrayList;
 
@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * The option --max-results restricts the command to return no more than limit results.
  * If exactly limit results are returned then there might be additional results available if a higher limit is used.
  */
-public class MISymbolInfoFunctions extends MICommand<MiSymbolInfoFunctionsInfo> {
+public class MISymbolInfoFunctions extends MICommand<MISymbolInfoFunctionsInfo> {
 
 	public MISymbolInfoFunctions() {
 		this("", "", 0, false);
@@ -70,7 +70,7 @@ public class MISymbolInfoFunctions extends MICommand<MiSymbolInfoFunctionsInfo> 
 	}
 
 	@Override
-	public MiSymbolInfoFunctionsInfo getResult(MIOutput out) {
-		return new MiSymbolInfoFunctionsInfo(out);
+	public MISymbolInfoFunctionsInfo getResult(MIOutput out) {
+		return new MISymbolInfoFunctionsInfo(out);
 	}
 }

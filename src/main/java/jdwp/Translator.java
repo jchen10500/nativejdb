@@ -13,8 +13,8 @@ package jdwp;
 
 import gdb.mi.service.command.events.*;
 import gdb.mi.service.command.output.*;
-import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo.SymbolFileInfo;
-import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo.Symbols;
+import gdb.mi.service.command.output.MISymbolInfoFunctionsInfo.SymbolFileInfo;
+import gdb.mi.service.command.output.MISymbolInfoFunctionsInfo.Symbols;
 import jdwp.jdi.LocationImpl;
 import jdwp.jdi.MethodImpl;
 import jdwp.jdi.ConcreteMethodImpl;
@@ -364,11 +364,11 @@ public class Translator {
 	}
 
 
-	public static void translateReferenceTypes(Map<Long, ReferenceType> referenceTypes, MiSymbolInfoFunctionsInfo response) {
+	public static void translateReferenceTypes(Map<Long, ReferenceType> referenceTypes, MISymbolInfoFunctionsInfo response) {
 		Map<String, ReferenceType> types = new HashMap<>();
 		for(SymbolFileInfo symbolFile : response.getSymbolFiles()) {
 			for(Symbols symbol : symbolFile.getSymbols()) {
-				if (symbol.getName().contains("HelloNested")) {
+				if (symbol.getName().contains("java/lang.String")) {
 					JDWP.symbol = symbol;
 				}
 				var index = symbol.getName().indexOf("::");

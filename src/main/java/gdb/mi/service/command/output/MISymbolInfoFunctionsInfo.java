@@ -41,11 +41,11 @@ import java.util.List;
  *                 description="static another_float_t f1(int);"}]}]}
  * </pre>
  */
-public class MiSymbolInfoFunctionsInfo extends MIInfo {
+public class MISymbolInfoFunctionsInfo extends MIInfo {
 
 	private SymbolFileInfo[] symbolFileInfos;
 
-	public MiSymbolInfoFunctionsInfo(MIOutput record) {
+	public MISymbolInfoFunctionsInfo(MIOutput record) {
 		super(record);
 		parse();
 		if (symbolFileInfos == null) {

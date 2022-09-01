@@ -28,10 +28,9 @@ package jdwp;
 import com.sun.jdi.connect.spi.Connection;
 import gdb.mi.service.command.AbstractMIControl;
 import gdb.mi.service.command.commands.MICommand;
-import gdb.mi.service.command.commands.MISymbolInfoFunctions;
 import gdb.mi.service.command.output.MIBreakInsertInfo;
 import gdb.mi.service.command.output.MIResultRecord;
-import gdb.mi.service.command.output.MiSymbolInfoFunctionsInfo;
+import gdb.mi.service.command.output.MISymbolInfoFunctionsInfo;
 import jdwp.jdi.VirtualMachineImpl;
 import jdwp.model.ReferenceType;
 
@@ -112,28 +111,11 @@ public class GDBControl extends AbstractMIControl {
     }
 
     private void loadSymbols() {
-        MICommand<MiSymbolInfoFunctionsInfo> cmd = getCommandFactory().createMiSymbolInfoFunctions();
+        MICommand<MISymbolInfoFunctionsInfo> cmd = getCommandFactory().createMiSymbolInfoFunctions();
         int token = JDWP.getNewTokenId();
         queueCommand(token, cmd);
-        MiSymbolInfoFunctionsInfo response = (MiSymbolInfoFunctionsInfo) getResponse(token, JDWP.DEF_REQUEST_TIMEOUT);
+        MISymbolInfoFunctionsInfo response = (MISymbolInfoFunctionsInfo) getResponse(token, JDWP.DEF_REQUEST_TIMEOUT);
         Translator.translateReferenceTypes(referenceTypes, response);
-
-        MICommand<MIBreakInsertInfo> command = getCommandFactory().createMIBreakInsert(false, false, "", 0,
-                JDWP.symbol.getName() + ":63", "0", false, false);
-
-        token = JDWP.getNewTokenId();
-        queueCommand(token, command);
-
-        MICommand<MIBreakInsertInfo> command2 = getCommandFactory().createMIBreakInsert(false, false, "", 0,
-                "HelloNested/HelloNested.java"+ ":63", "0", false, false);
-
-        token = JDWP.getNewTokenId();
-        queueCommand(token, command2);
-
-        MIBreakInsertInfo reply = (MIBreakInsertInfo) getResponse(token, JDWP.DEF_REQUEST_TIMEOUT);
-        if (!reply.getMIOutput().getMIResultRecord().getResultClass().equals(MIResultRecord.ERROR)) {
-            System.out.println("Something went wrong with break-insert");
-        }
     }
 
     void flush() {
