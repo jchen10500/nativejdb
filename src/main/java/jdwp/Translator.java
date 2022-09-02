@@ -18,6 +18,7 @@ import gdb.mi.service.command.output.MISymbolInfoFunctionsInfo.Symbols;
 import jdwp.jdi.LocationImpl;
 import jdwp.jdi.MethodImpl;
 import jdwp.jdi.ConcreteMethodImpl;
+import jdwp.model.Method;
 import jdwp.model.ReferenceType;
 
 import javax.lang.model.SourceVersion;
@@ -367,24 +368,35 @@ public class Translator {
 	public static void translateReferenceTypes(Map<Long, ReferenceType> referenceTypes, MISymbolInfoFunctionsInfo response) {
 		Map<String, ReferenceType> types = new HashMap<>();
 		for(SymbolFileInfo symbolFile : response.getSymbolFiles()) {
-			for(Symbols symbol : symbolFile.getSymbols()) {
-				if (symbol.getName().contains("java/lang.String")) {
-					JDWP.symbol = symbol;
+
+			// Verify that file name exists
+			if (!symbolFile.getFilename().equals("<unknown>")) {
+				ReferenceType newReferenceType = new ReferenceType(symbolFile);
+				for (Symbols symbol : symbolFile.getSymbols()) {
+					Method newMethod = new Method(symbolFile, symbol);
+					newMethod.setReferenceType(newReferenceType);
+					newReferenceType.addMethod2(newMethod);
 				}
-				var index = symbol.getName().indexOf("::");
-				if (index != (-1)) {
-					var className = symbol.getName().substring(0, index);
-					if (isJavaClassName(className)) {
-						var methodInfo = gdbSymbolToMethodInfo(symbol.getName(), symbol.getType());
-						var refType = types.computeIfAbsent(className, key -> {
-							var type = new ReferenceType(className);
-							referenceTypes.put(type.getUniqueID(), type);
-							return type;
-						});
-						refType.addMethod(methodInfo);
-					}
-				}
+				referenceTypes.put(newReferenceType.getUniqueID(), newReferenceType);
 			}
+
+
+//			for(Symbols symbol : symbolFile.getSymbols()) {
+//
+//				var index = symbol.getName().indexOf("::");
+//				if (index != (-1)) {
+//					var className = symbol.getName().substring(0, index);
+//					if (isJavaClassName(className)) {
+//						var methodInfo = gdbSymbolToMethodInfo(symbol.getName(), symbol.getType());
+//						var refType = types.computeIfAbsent(className, key -> {
+//							var type = new ReferenceType(className);
+//							referenceTypes.put(type.getUniqueID(), type);
+//							return type;
+//						});
+//						refType.addMethod(methodInfo);
+//					}
+//				}
+//			}
 		}
 	}
 

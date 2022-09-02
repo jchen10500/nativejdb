@@ -31,6 +31,7 @@ import gdb.mi.service.command.output.*;
 import jdwp.jdi.ReferenceTypeImpl;
 import jdwp.jdi.ThreadGroupReferenceImpl;
 import jdwp.jdi.ThreadReferenceImpl;
+import jdwp.model.ReferenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,11 +79,18 @@ public class JDWPVirtualMachine {
 
             public void reply(GDBControl gc, PacketStream answer, PacketStream command) {
                 String signature = command.readString();
-                List<ReferenceTypeImpl> referenceTypes = gc.vm.findReferenceTypes(signature);
-                answer.writeInt(referenceTypes.size());
-                for (ReferenceTypeImpl referenceType : referenceTypes) {
-                    VirtualMachine.ClassesBySignature.ClassInfo.write(referenceType, gc, answer);
+                List<ReferenceType> refTypes = gc.findReferenceType(signature);
+                answer.writeInt(refTypes.size());
+                for (ReferenceType refType : refTypes) {
+                    answer.writeByte(JDWP.TypeTag.CLASS);                      // FIXME
+                    answer.writeClassRef(refType.getUniqueID());
+                    answer.writeInt(JDWP.ClassStatus.PREPARED);                // FIXME
                 }
+//                List<ReferenceTypeImpl> referenceTypes = gc.vm.findReferenceTypes(signature);
+//                answer.writeInt(referenceTypes.size());
+//                for (ReferenceTypeImpl referenceType : referenceTypes) {
+//                    VirtualMachine.ClassesBySignature.ClassInfo.write(referenceType, gc, answer);
+//                }
             }
         }
 

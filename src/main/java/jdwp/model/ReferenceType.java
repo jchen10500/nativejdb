@@ -11,15 +11,13 @@ public class ReferenceType {
 
     private MISymbolInfoFunctionsInfo.SymbolFileInfo symbolFileInfo;
 
-    private MISymbolInfoFunctionsInfo.Symbols symbol;
-
     private String className;
 
     private String type;
     private String signature;
     private String genericSignature;
 
-    private Map<Long, Translator.MethodInfo> methods = new HashMap<>();
+    private Map<Long, Translator.MethodInfo> methods;
     private Map<Long, Method> methods2 = new HashMap<>();
 
     private final Long uniqueID;
@@ -33,15 +31,22 @@ public class ReferenceType {
         this.uniqueID = counter++;
     }
 
-    public ReferenceType(MISymbolInfoFunctionsInfo.SymbolFileInfo symbolFileInfo, MISymbolInfoFunctionsInfo.Symbols symbol) {
+    public ReferenceType(MISymbolInfoFunctionsInfo.SymbolFileInfo symbolFileInfo) {
         this.symbolFileInfo = symbolFileInfo;
-        this.symbol = symbol;
-        this.className = symbol.getName().substring(0, symbol.getName().indexOf("::"));
-        this.type = symbol.getType();
-        this.signature = Translator.gdb2JNIType(this.type);
+//        this.className = className;
+        this.signature = getSignature();
         this.genericSignature = null;
         this.uniqueID = counter++;
+        this.methods = new HashMap<>();
     }
+
+//    public ReferenceType() {
+//        this.className = symbol.getName().substring(0, symbol.getName().indexOf("::"));
+//        this.type = symbol.getType();
+//        this.signature = Translator.gdb2JNIType(this.type);
+//        this.genericSignature = null;
+//        this.uniqueID = counter++;
+//    }
 
     public String getClassName() {
         return className;
@@ -79,6 +84,14 @@ public class ReferenceType {
     }
 
     public String getSignature() {
+        if (signature == null) {
+            String filename = symbolFileInfo.getFilename();
+            int javaExtensionIndex = filename.indexOf(".java");
+            if (javaExtensionIndex != -1) {
+                filename = filename.substring(0, javaExtensionIndex);   // removes .java extension
+            }
+            signature = "L" + filename + ";";
+        }
         return signature;
     }
 
@@ -90,7 +103,4 @@ public class ReferenceType {
         return symbolFileInfo;
     }
 
-    public MISymbolInfoFunctionsInfo.Symbols getSymbol() {
-        return symbol;
-    }
 }

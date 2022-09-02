@@ -35,7 +35,10 @@ import jdwp.jdi.VirtualMachineImpl;
 import jdwp.model.ReferenceType;
 
 import java.io.*;
+import java.sql.Ref;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GDBControl extends AbstractMIControl {
@@ -111,7 +114,7 @@ public class GDBControl extends AbstractMIControl {
     }
 
     private void loadSymbols() {
-        MICommand<MISymbolInfoFunctionsInfo> cmd = getCommandFactory().createMiSymbolInfoFunctions();
+        MICommand<MISymbolInfoFunctionsInfo> cmd = getCommandFactory().createMiSymbolInfoFunctions("", "java", 0, false);
         int token = JDWP.getNewTokenId();
         queueCommand(token, cmd);
         MISymbolInfoFunctionsInfo response = (MISymbolInfoFunctionsInfo) getResponse(token, JDWP.DEF_REQUEST_TIMEOUT);
@@ -160,5 +163,15 @@ public class GDBControl extends AbstractMIControl {
 
     public Map<Long, ReferenceType> getReferenceTypes() {
         return referenceTypes;
+    }
+
+    public List<ReferenceType> findReferenceType(String signature) {
+        List<ReferenceType> types = new ArrayList<>();
+        for (ReferenceType refType : referenceTypes.values()) {
+            if (signature.equals(refType.getSignature())) {
+                types.add(refType);
+            }
+        }
+        return types;
     }
 }

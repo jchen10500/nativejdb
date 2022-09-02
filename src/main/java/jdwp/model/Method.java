@@ -5,9 +5,11 @@ import jdwp.Translator;
 
 public class Method {
 
+    private MISymbolInfoFunctionsInfo.SymbolFileInfo symbolFileInfo;
+
     private MISymbolInfoFunctionsInfo.Symbols symbol;
 
-    private final ReferenceType referenceType;
+    private ReferenceType referenceType;
     private int startLine;
     private int endLine;
     private String methodName;
@@ -17,8 +19,9 @@ public class Method {
 
     private static Long counter = 0L;
 
-    public Method(ReferenceType referenceType, MISymbolInfoFunctionsInfo.Symbols symbol) {
-        this.referenceType = referenceType;
+    public Method(MISymbolInfoFunctionsInfo.SymbolFileInfo symbolFileInfo, MISymbolInfoFunctionsInfo.Symbols symbol) {
+//        this.referenceType = referenceType;
+        this.symbolFileInfo = symbolFileInfo;
         this.symbol = symbol;
         this.startLine = symbol.getLine();
         this.methodName = symbol.getName().substring(0, symbol.getName().indexOf("::"));
@@ -29,6 +32,10 @@ public class Method {
 
     public ReferenceType getReferenceType() {
         return referenceType;
+    }
+
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
     }
 
     public MISymbolInfoFunctionsInfo.Symbols getSymbol() {
